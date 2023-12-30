@@ -211,7 +211,7 @@ void microMouseServer::saveMaze()
                 int left = this->mazeData[i][j].isWallLeft();
                 int right = this->mazeData[i][j].isWallRight();
 
-                mazeFile << this->mazeData[i][j].posX() << " " << this->mazeData[i][j].posY() << " " << top << " " << bottom << " " << left << " " << right << endl;
+                mazeFile << this->mazeData[i][j].posX() << " " << this->mazeData[i][j].posY() << " " << top << " " << bottom << " " << left << " " << right << Qt::endl;
             }
         }
 
