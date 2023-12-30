@@ -23,3 +23,45 @@ void microMouseServer::studentAI()
 */
 
 }
+
+/* Checks if you are in the 2x2 square*/
+bool atFinish(){
+    /*In the End Square, when you enter, you can always move forward. The other option is to move right or left, but never both.*/
+    if(!isWallForward()){
+        if(!isWallRight() && isWallLeft()){
+            moveForward();
+            /*If there is no wall on the right when you enter, then if you move forward, there should be no wall on the right in a 2x2 square. Amd same with left*/
+            if(!isWallRight()){
+                return true;
+            }
+            else{
+                /*Revert back to original position*/
+                turnRight();
+                turnRight();
+                moveForward();
+                turnRight();
+                turnRight();
+            }
+        }
+        if(isWallRight() && !isWallLeft()){
+            moveForward();
+            if(!isWallLeft()){
+                return true;
+            }
+            else{
+                /*Revert back to original position*/
+                turnRight();
+                turnRight();
+                moveForward();
+                turnRight();
+                turnRight();
+            }
+        }
+    }
+    return false;
+}
+
+while(!atFinish()){
+
+}
+
