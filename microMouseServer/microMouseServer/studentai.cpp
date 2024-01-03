@@ -59,14 +59,22 @@ list<list<int>> neighbors(list<int> coords, int direction, bool iwf, bool iwl, b
 void microMouseServer::studentAI()
 {
 
+    /*
     int count = 0;
     bool atFinish=false;
     bool iwf;
     bool iwl;
     bool iwr;
-    list coordinates;
+    list coordinates = {0,0};
     list<list<int>> myNeighbors;
-    while(count<400){
+    int direction=0;
+    //"visited" and "visitedtwice" mark which squares have been visited, with priority going to non-visited squares
+    list<list<int>> visited;
+    list<list<int>> visitedtwice;
+    bool found;
+    bool foundtwice;
+
+    while(count<4){
         /*
          atFinish = false;
         /*atFinish part
@@ -127,18 +135,141 @@ void microMouseServer::studentAI()
                 moveForward();
             }
         }
-        */
-        foundFinish();
-        bool iwf = isWallForward();
-        bool iwl = isWallLeft();
-        bool iwr = isWallRight();
-        list coordinates = {0,0};
-        list<list<int>> myNeighbors = neighbors(coordinates, 0, iwf, iwl, iwr);
-        if(neighbors.front().front()>coordinates.front()){
 
+        iwf = isWallForward();
+        iwl = isWallLeft();
+        iwr = isWallRight();
+        found = ::find(visited.begin(), visited.end(), coordinates) != visited.end();
+        foundtwice = ::find(visitedtwice.begin(), visitedtwice.end(), coordinates) != visitedtwice.end();
+
+        myNeighbors = neighbors(coordinates, direction, iwf, iwl, iwr);
+        //current condition for exit, has to be changed later on
+        if(myNeighbors.size()==0){
+            foundFinish();
+            atFinish=true;
         }
-        count++;
+        else{
+            while(myNeighbors.size()>1){
+                for(list<int> neigh: myNeighbors){
+                    foundtwice = ::find(visitedtwice.begin(), visitedtwice.end(), neigh) != visitedtwice.end();
+                    if(foundtwice && myNeighbors.size()>1){
+                        myNeighbors.remove(neigh);
+                    }
+                }
+                break;
+            }
 
+            while(myNeighbors.size()>1){
+                for(list<int> neigh: myNeighbors){
+                    found = ::find(visited.begin(), visited.end(), neigh) != visited.end();
+                    if(found && myNeighbors.size()>1){
+                        myNeighbors.remove(neigh);
+                    }
+                }
+                break;
+            }
+
+            if(myNeighbors.front().back()>coordinates.back()){
+                if(direction==0){
+                    moveForward();
+                }
+                else if(direction==1){
+                    turnLeft();
+                    moveForward();
+                }
+                else if(direction==2){
+                    turnRight();
+                    turnRight();
+                    moveForward();
+                }
+                else{
+                    turnRight();
+                    moveForward();
+                }
+                direction=0;
+                coordinates = {myNeighbors.front().front(),myNeighbors.front().back()};
+            }
+            else if(myNeighbors.front().back()<coordinates.back()){
+
+                if(direction==2){
+                    moveForward();
+                }
+                else if(direction==3){
+                    turnLeft();
+                    moveForward();
+                }
+                else if(direction==0){
+                    turnRight();
+                    turnRight();
+                    moveForward();
+                }
+                else{
+                    turnRight();
+                    moveForward();
+                }
+                direction=2;
+                coordinates = {myNeighbors.front().front(),myNeighbors.front().back()};
+            }
+            else{
+                if(myNeighbors.front().front()>coordinates.front()){
+                    if(direction==1){
+                        moveForward();
+                    }
+                    else if(direction==2){
+                        turnLeft();
+                        moveForward();
+                    }
+                    else if(direction==3){
+                        turnRight();
+                        turnRight();
+                        moveForward();
+                    }
+                    else{
+                        turnRight();
+                        moveForward();
+                    }
+                    direction=1;
+                    coordinates = {myNeighbors.front().front(),myNeighbors.front().back()};
+                }
+                else if(myNeighbors.front().front()<coordinates.front()){
+                    if(direction==3){
+                        moveForward();
+                    }
+                    else if(direction==0){
+                        turnLeft();
+                        moveForward();
+                    }
+                    else if(direction==1){
+                        turnRight();
+                        turnRight();
+                        moveForward();
+                    }
+                    else{
+                        turnRight();
+                        moveForward();
+                    }
+                    direction=3;
+                    coordinates = {myNeighbors.front().front(),myNeighbors.front().back()};
+                }
+
+            }
+            found = ::find(visited.begin(), visited.end(), coordinates) != visited.end();
+            if(found){
+                visited.remove(coordinates);
+                visitedtwice.push_back(coordinates);
+            }
+            else{
+                visited.push_back(coordinates);
+            }
+        }
+
+        printUI(to_string(coordinates.front()).data());
+        printUI(to_string(coordinates.back()).data());
+
+
+        printUI(to_string(found).data());
+        count++;
+        */
     }
 
 
