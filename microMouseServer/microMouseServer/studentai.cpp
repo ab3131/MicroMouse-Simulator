@@ -59,13 +59,21 @@ list<list<int>> neighbors(list<int> coords, int direction, bool iwf, bool iwl, b
 void microMouseServer::studentAI()
 {
 
-    /*
+    /*The algorithm works according to the following rules:
+
+Whenever you pass through an entrance of a passage, whether it is to enter or exit a junction, leave a mark at the entrance as you pass.
+When you are at a junction, use the first applicable rule below to pick an entrance to exit through:
+1. If only the entrance you just came from is marked, pick an arbitrary unmarked entrance, if any. This rule also applies if you're just starting in the middle of the maze and there are no marked entrances at all.
+2. Pick the entrance you just came from, unless it is marked twice. This rule will apply whenever you reach a dead end.
+3. Pick any entrance with the fewest marks (zero if possible, else one).
+*/
     int count = 0;
     bool atFinish=false;
     bool iwf;
     bool iwl;
     bool iwr;
     list coordinates = {0,0};
+    list previouscoords = {0,0};
     list<list<int>> myNeighbors;
     int direction=0;
     //"visited" and "visitedtwice" mark which squares have been visited, with priority going to non-visited squares
@@ -73,7 +81,76 @@ void microMouseServer::studentAI()
     list<list<int>> visitedtwice;
     bool found;
     bool foundtwice;
+    bool atJunction = false;
+    visited.push_back(coordinates);
 
+
+    while(!atFinish){
+        //test for junction(marking only happens when you are at a junction--> look back at entrance you passed through) don't use 0,0
+        atJunction=false;
+        myNeighbors = neighbors(coordinates, direction, iwf, iwl, iwr);
+        if(myNeighbors.size()>1){
+            //not at first move
+            if(coordinates.front()!=0 && coordinates.back()!=0 && previouscoords.front()!=0 && previouscoords.back()!=0){
+                found = ::find(visited.begin(), visited.end(), previouscoords) != visited.end();
+                if(found){
+                    visited.remove(previouscoords);
+                    visitedtwice.push_back(previouscoords);
+                }
+                else{
+                    visited.push_back(previouscoords);
+                }
+
+            }
+
+            //check #1
+
+        }
+        else{
+            //first three conditions are if neighbors size is 1, otherwise it is 0 and we go to else condition and turn around(dead end)
+            previouscoords=coordinates;
+            if(!isWallForward){
+
+                moveForward();
+            }
+            else if(!isWallRight()){
+                turnRight();
+                moveForward();
+            }
+            else if(!isWallLeft()){
+                turnLeft();
+                moveForward();
+
+            }
+            else{
+                turnRight();
+                turnRight();
+                moveForward();
+            }
+
+        }
+
+
+
+
+
+
+
+
+    }
+
+
+
+
+
+
+
+
+
+
+
+    //this is code for a testing phase where i tried to code a combination of Tremaux's algorithm and using neighbors
+    /*
     while(count<4){
         /*
          atFinish = false;
@@ -269,11 +346,12 @@ void microMouseServer::studentAI()
 
         printUI(to_string(found).data());
         count++;
-        */
+
     }
-
-
+    */
 }
+
+
 
 
 /*
