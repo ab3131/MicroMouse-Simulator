@@ -2,6 +2,7 @@
 #include "micromouseserver.h"
 using namespace std;
 #include <iostream>
+#include <string>
 bool amIFinished = false;
 
 
@@ -56,6 +57,89 @@ list<list<int>> neighbors(list<int> coords, int direction, bool iwf, bool iwl, b
     return returnList;
 }
 
+
+//returns direction to turn, direction new
+list<int> todo(int dir, list<int> origcoord, list<int> newcoord){
+    //facing up
+    if(dir==0){
+        //right
+        if(origcoord.front()<newcoord.front()){
+            return {1, 1}
+        }
+        //left
+        else if(origcoord.front()>newcoord.front()){
+            return {3,3}
+        }
+        //down
+        else if(origcoord.back()>newcoord.back()){
+            return {2,2}
+        }
+        //up
+        else{
+            return {0,0}
+        }
+    }
+    //facing right
+    else if(dir==1){
+        //right
+        if(origcoord.front()<newcoord.front()){
+            return {0,1}
+        }
+        //left
+        else if(origcoord.front()>newcoord.front()){
+            return {2,3}
+        }
+        //down
+        else if(origcoord.back()>newcoord.back()){
+            return {1,2}
+        }
+        //up
+        else{
+            return {3,0}
+        }
+    }
+    //facing down
+    if(dir==2){
+        //right
+        if(origcoord.front()<newcoord.front()){
+            return {3,1}
+        }
+        //left
+        else if(origcoord.front()>newcoord.front()){
+            return {1,3}
+        }
+        //down
+        else if(origcoord.back()>newcoord.back()){
+            return {0,2}
+        }
+        //up
+        else{
+            return {2,0}
+        }
+    }
+    //facing left
+    if(dir==3){
+        //right
+        if(origcoord.front()<newcoord.front()){
+            return {2,1}
+        }
+        //left
+        else if(origcoord.front()>newcoord.front()){
+            return {0,3}
+        }
+        //down
+        else if(origcoord.back()>newcoord.back()){
+            return {3,2}
+        }
+        //up
+        else{
+            return {1,0}
+        }
+    }
+
+}
+
+
 void microMouseServer::studentAI()
 {
 
@@ -74,6 +158,7 @@ When you are at a junction, use the first applicable rule below to pick an entra
     bool iwr;
     list coordinates = {0,0};
     list previouscoords = {0,0};
+    list extracoords = {0,0};
     list<list<int>> myNeighbors;
     int direction=0;
     //"visited" and "visitedtwice" mark which squares have been visited, with priority going to non-visited squares
@@ -82,16 +167,32 @@ When you are at a junction, use the first applicable rule below to pick an entra
     bool found;
     bool foundtwice;
     bool atJunction = false;
+    int marked = 0;
     visited.push_back(coordinates);
+    int min=3;
+    int tomove = 0;
 
 
     while(!atFinish){
-        //test for junction(marking only happens when you are at a junction--> look back at entrance you passed through) don't use 0,0
+        //FIX COORDINATE STORAGE IMMEDIATELY
+        //atJunction will be true if the previous coordinates were a junction...so we also have to mark current coordinates because they are an exit to the junction
+        if(atJunction){
+            found = ::find(visited.begin(), visited.end(), coordinates) != visited.end();
+            if(found){
+                visited.remove(coordinates);
+                visitedtwice.push_back(coordinates);
+            }
+            else{
+                visited.push_back(coordinates);
+            }
+        }
         atJunction=false;
         myNeighbors = neighbors(coordinates, direction, iwf, iwl, iwr);
         if(myNeighbors.size()>1){
-            //not at first move
+            atJunction=true;
+            //if junction not at first move
             if(coordinates.front()!=0 && coordinates.back()!=0 && previouscoords.front()!=0 && previouscoords.back()!=0){
+                //add entrance to respective list
                 found = ::find(visited.begin(), visited.end(), previouscoords) != visited.end();
                 if(found){
                     visited.remove(previouscoords);
@@ -101,14 +202,65 @@ When you are at a junction, use the first applicable rule below to pick an entra
                     visited.push_back(previouscoords);
                 }
 
+
             }
 
-            //check #1
+            //check #1: only entrance you came from is marked, pick arbitrary entrance
+            marked=0;
+            for(list coords: myNeighbors){
+                found = ::find(visited.begin(), visited.end(), coords) != visited.end();
+                foundtwice = ::find(visitedtwice.begin(), visitedtwice.end(), coords) != visitedtwice.end();
+                if(found || foundtwice){
+                    marked++;
+                }
+            }
+            if(marked==0){
+                previouscoords= coordinates;
+                coordinates = myNeighbors.front();
+                tomove = todo(direction, )
+
+            }
+            else{
+                //check #2: pick entrance you just came from, unless marked twice
+                foundtwice = ::find(visitedtwice.begin(), visitedtwice.end(), previouscoords) != visitedtwice.end();
+                coordinates = previouscoords;
+                //what about previous coords? what does that become?
+                if(!foundtwice){
+                    turnRight();
+                    turnRight();
+                    moveForward();
+                }
+                else{
+                    //check #3: pick entrance with the fewest marks
+                    min=3;
+                    for(list coords: myNeighbors){
+                        found = ::find(visited.begin(), visited.end(), coords) != visited.end();
+                        foundtwice = ::find(visitedtwice.begin(), visitedtwice.end(), coords) != visitedtwice.end();
+                        if(!found && !foundtwice){
+                            previouscoords = coordinates;
+                            //update coordinates here
+                            //figure out which way those coordinates are and how to get there
+                            break;
+                        }
+                        if(found){
+                            min=1;
+                            extracoords = coords;
+                            //wait until end to decide to use this
+                        }
+
+                    }
+                    if(min==1){
+                        //use extracoords
+                    }
+
+                }
+            }
 
         }
         else{
             //first three conditions are if neighbors size is 1, otherwise it is 0 and we go to else condition and turn around(dead end)
             previouscoords=coordinates;
+            atJunction=false;
             if(!isWallForward){
 
                 moveForward();
