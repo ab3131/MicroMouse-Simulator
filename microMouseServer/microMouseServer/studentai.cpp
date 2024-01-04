@@ -58,82 +58,82 @@ list<list<int>> neighbors(list<int> coords, int direction, bool iwf, bool iwl, b
 }
 
 
-//returns direction to turn, direction new
+//returns direction to turn, new direction
 list<int> todo(int dir, list<int> origcoord, list<int> newcoord){
     //facing up
     if(dir==0){
         //right
         if(origcoord.front()<newcoord.front()){
-            return {1, 1}
+            return {1, 1};
         }
         //left
         else if(origcoord.front()>newcoord.front()){
-            return {3,3}
+            return {3,3};
         }
         //down
         else if(origcoord.back()>newcoord.back()){
-            return {2,2}
+            return {2,2};
         }
         //up
         else{
-            return {0,0}
+            return {0,0};
         }
     }
     //facing right
     else if(dir==1){
         //right
         if(origcoord.front()<newcoord.front()){
-            return {0,1}
+            return {0,1};
         }
         //left
         else if(origcoord.front()>newcoord.front()){
-            return {2,3}
+            return {2,3};
         }
         //down
         else if(origcoord.back()>newcoord.back()){
-            return {1,2}
+            return {1,2};
         }
         //up
         else{
-            return {3,0}
+            return {3,0};
         }
     }
     //facing down
     if(dir==2){
         //right
         if(origcoord.front()<newcoord.front()){
-            return {3,1}
+            return {3,1};
         }
         //left
         else if(origcoord.front()>newcoord.front()){
-            return {1,3}
+            return {1,3};
         }
         //down
         else if(origcoord.back()>newcoord.back()){
-            return {0,2}
+            return {0,2};
         }
         //up
         else{
-            return {2,0}
+            return {2,0};
         }
     }
     //facing left
     if(dir==3){
         //right
         if(origcoord.front()<newcoord.front()){
-            return {2,1}
+            return {2,1};
         }
         //left
         else if(origcoord.front()>newcoord.front()){
-            return {0,3}
+            return {0,3};
         }
         //down
         else if(origcoord.back()>newcoord.back()){
-            return {3,2}
+            return {3,2};
         }
         //up
         else{
-            return {1,0}
+            return {1,0};
         }
     }
 
@@ -170,7 +170,9 @@ When you are at a junction, use the first applicable rule below to pick an entra
     int marked = 0;
     visited.push_back(coordinates);
     int min=3;
-    int tomove = 0;
+    list<int> tomove = {0,0};
+    list<int> recentJunction = {0,0};
+    list<list<int>> moves = {};
 
 
     while(!atFinish){
@@ -217,18 +219,40 @@ When you are at a junction, use the first applicable rule below to pick an entra
             if(marked==0){
                 previouscoords= coordinates;
                 coordinates = myNeighbors.front();
-                tomove = todo(direction, )
+                tomove = todo(direction, previouscoords, coordinates);
+                direction = tomove.back();
+                if(tomove.front()==0){
+                    moveForward();
+                }
+                else if(tomove.front()==1){
+                    turnRight();
+                    moveForward();
+                }
+                else if(tomove.front()==2){
+                    turnRight();
+                    turnRight();
+                    moveForward();
+                }
+                else{
+                    turnLeft();
+                    moveForward();
+                }
 
             }
             else{
                 //check #2: pick entrance you just came from, unless marked twice
                 foundtwice = ::find(visitedtwice.begin(), visitedtwice.end(), previouscoords) != visitedtwice.end();
+                extracoords = coordinates;
                 coordinates = previouscoords;
-                //what about previous coords? what does that become?
+                previouscoords = extracoords;
                 if(!foundtwice){
                     turnRight();
                     turnRight();
                     moveForward();
+                    direction = direction-2;
+                    if(direction<0){
+                        direction = direction+4;
+                    }
                 }
                 else{
                     //check #3: pick entrance with the fewest marks
@@ -238,8 +262,25 @@ When you are at a junction, use the first applicable rule below to pick an entra
                         foundtwice = ::find(visitedtwice.begin(), visitedtwice.end(), coords) != visitedtwice.end();
                         if(!found && !foundtwice){
                             previouscoords = coordinates;
-                            //update coordinates here
-                            //figure out which way those coordinates are and how to get there
+                            tomove = todo(direction,coordinates, coords);
+                            coordinates = coords;
+                            direction=tomove.back();
+                            if(tomove.front()==0){
+                                moveForward();
+                            }
+                            else if(tomove.front()==1){
+                                turnRight();
+                                moveForward();
+                            }
+                            else if(tomove.front()==2){
+                                turnRight();
+                                turnRight();
+                                moveForward();
+                            }
+                            else{
+                                turnLeft();
+                                moveForward();
+                            }
                             break;
                         }
                         if(found){
@@ -250,37 +291,127 @@ When you are at a junction, use the first applicable rule below to pick an entra
 
                     }
                     if(min==1){
-                        //use extracoords
+                        previouscoords = coordinates;
+                        coordinates = extracoords;
+                        tomove = todo(direction,previouscoords, coordinates);
+                        direction=tomove.back();
+                        if(tomove.front()==0){
+                            moveForward();
+                        }
+                        else if(tomove.front()==1){
+                            turnRight();
+                            moveForward();
+                        }
+                        else if(tomove.front()==2){
+                            turnRight();
+                            turnRight();
+                            moveForward();
+                        }
+                        else{
+                            turnLeft();
+                            moveForward();
+                        }
                     }
+
+                }
+            }
+            recentJunction = coordinates;
+
+        }
+
+        else{
+            //first three conditions are if neighbors size is 1, otherwise it is 0 and we go to else condition and turn around(dead end)
+            previouscoords=coordinates;
+            atJunction=false;
+
+            if(myNeighbors.size()>0){
+                if(!isWallForward()){
+
+                    moveForward();
+                    coordinates = myNeighbors.front();
+
+                }
+                else if(!isWallRight()){
+                    turnRight();
+                    moveForward();
+                    coordinates = myNeighbors.front();
+                    direction++;
+                }
+                else if(!isWallLeft()){
+                    turnLeft();
+                    moveForward();
+                    coordinates = myNeighbors.front();
+                    direction--;
+                    if(direction<0){
+                        direction=3;
+                    }
+
+                }
+                moves.push_back(coordinates);
+            }
+            else{
+                while(moves.size()>0){
+                    previouscoords = coordinates;
+                    coordinates = moves.back();
+
+                    tomove = (direction, previouscoords, coordinates);
+                    direction = tomove.back();
+                    if(tomove.front()==0){
+                        moveForward();
+                    }
+                    else if(tomove.front()==1){
+                        turnRight();
+                        moveForward();
+                    }
+                    else if(tomove.front()==2){
+                        turnRight();
+                        turnRight();
+                        moveForward();
+                    }
+                    else{
+                        turnLeft();
+                        moveForward();
+                    }
+                    moves.pop_back();
+
 
                 }
             }
 
         }
+        atFinish = false;
+        /*atFinish part*/
+        if(isWallForward() || (isWallRight() && isWallLeft())){
+            atFinish=false;
+        }
         else{
-            //first three conditions are if neighbors size is 1, otherwise it is 0 and we go to else condition and turn around(dead end)
-            previouscoords=coordinates;
-            atJunction=false;
-            if(!isWallForward){
-
-                moveForward();
-            }
-            else if(!isWallRight()){
-                turnRight();
-                moveForward();
-            }
-            else if(!isWallLeft()){
+            moveForward();
+            if(isWallRight() && !isWallLeft() && isWallForward()){
                 turnLeft();
                 moveForward();
+                if(!isWallLeft()){
+                    atFinish=true;
+                }
 
             }
+            else if(!isWallRight() && isWallLeft() && isWallForward()){
+                turnRight();
+                moveForward();
+                if(!isWallRight()){
+                    atFinish=true;
+                }
+            }
             else{
+                atFinish=false;
                 turnRight();
                 turnRight();
                 moveForward();
+                turnRight();
+                turnRight();
             }
-
         }
+        count++;
+        /*atFinish part*/
 
 
 
