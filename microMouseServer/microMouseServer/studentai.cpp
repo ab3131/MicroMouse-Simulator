@@ -3,6 +3,7 @@
 using namespace std;
 #include <iostream>
 #include <string>
+#include <qDebug>
 bool amIFinished = false;
 
 
@@ -75,8 +76,11 @@ list<int> todo(int dir, list<int> origcoord, list<int> newcoord){
             return {2,2};
         }
         //up
-        else{
+        else if(origcoord.back()<newcoord.back()){
             return {0,0};
+        }
+        else{
+            return {4,4};
         }
     }
     //facing right
@@ -94,8 +98,11 @@ list<int> todo(int dir, list<int> origcoord, list<int> newcoord){
             return {1,2};
         }
         //up
-        else{
+        else if(origcoord.back()<newcoord.back()){
             return {3,0};
+        }
+        else{
+            return {4,4};
         }
     }
     //facing down
@@ -113,8 +120,11 @@ list<int> todo(int dir, list<int> origcoord, list<int> newcoord){
             return {0,2};
         }
         //up
-        else{
+        else if(origcoord.back()<newcoord.back()){
             return {2,0};
+        }
+        else{
+            return {4,4};
         }
     }
     //facing left
@@ -132,8 +142,11 @@ list<int> todo(int dir, list<int> origcoord, list<int> newcoord){
             return {3,2};
         }
         //up
-        else{
+        else if(origcoord.back()<newcoord.back()){
             return {1,0};
+        }
+        else{
+            return {4,4};
         }
     }
 
@@ -143,19 +156,10 @@ list<int> todo(int dir, list<int> origcoord, list<int> newcoord){
 void microMouseServer::studentAI()
 {
 
-    /*The algorithm works according to the following rules:
 
-Whenever you pass through an entrance of a passage, whether it is to enter or exit a junction, leave a mark at the entrance as you pass.
-When you are at a junction, use the first applicable rule below to pick an entrance to exit through:
-1. If only the entrance you just came from is marked, pick an arbitrary unmarked entrance, if any. This rule also applies if you're just starting in the middle of the maze and there are no marked entrances at all.
-2. Pick the entrance you just came from, unless it is marked twice. This rule will apply whenever you reach a dead end.
-3. Pick any entrance with the fewest marks (zero if possible, else one).
-*/
+
     int count = 0;
     bool atFinish=false;
-    bool iwf;
-    bool iwl;
-    bool iwr;
     list coordinates = {0,0};
     list previouscoords = {0,0};
     list extracoords = {0,0};
@@ -168,15 +172,13 @@ When you are at a junction, use the first applicable rule below to pick an entra
     bool foundtwice;
     bool atJunction = false;
     int marked = 0;
-    visited.push_back(coordinates);
     int min=3;
     list<int> tomove = {0,0};
-    list<int> recentJunction = {0,0};
     list<list<int>> moves = {};
+    bool notmin = false;
 
 
     while(!atFinish){
-        //FIX COORDINATE STORAGE IMMEDIATELY
         //atJunction will be true if the previous coordinates were a junction...so we also have to mark current coordinates because they are an exit to the junction
         if(atJunction){
             found = ::find(visited.begin(), visited.end(), coordinates) != visited.end();
@@ -189,11 +191,15 @@ When you are at a junction, use the first applicable rule below to pick an entra
             }
         }
         atJunction=false;
-        myNeighbors = neighbors(coordinates, direction, iwf, iwl, iwr);
+        myNeighbors = neighbors(coordinates, direction, isWallForward(), isWallLeft(), isWallRight());
+
+        //myNeighbors size will be greater than one only if the point is a junction
         if(myNeighbors.size()>1){
+            moves.clear();
+            moves.push_back(coordinates);
             atJunction=true;
             //if junction not at first move
-            if(coordinates.front()!=0 && coordinates.back()!=0 && previouscoords.front()!=0 && previouscoords.back()!=0){
+            if((coordinates.front()!=0 || coordinates.back()!=0) && (previouscoords.front()!=0 || previouscoords.back()!=0)){
                 //add entrance to respective list
                 found = ::find(visited.begin(), visited.end(), previouscoords) != visited.end();
                 if(found){
@@ -223,32 +229,40 @@ When you are at a junction, use the first applicable rule below to pick an entra
                 direction = tomove.back();
                 if(tomove.front()==0){
                     moveForward();
+                    qDebug()<<"moved forward";
                 }
                 else if(tomove.front()==1){
                     turnRight();
                     moveForward();
+                    qDebug()<<"turned right and moved forward";
+
                 }
                 else if(tomove.front()==2){
                     turnRight();
                     turnRight();
                     moveForward();
+                    qDebug()<<"turned around and moved forward";
                 }
                 else{
                     turnLeft();
                     moveForward();
+                    qDebug()<<"turned left and moved forward";
+
                 }
 
             }
             else{
                 //check #2: pick entrance you just came from, unless marked twice
                 foundtwice = ::find(visitedtwice.begin(), visitedtwice.end(), previouscoords) != visitedtwice.end();
-                extracoords = coordinates;
-                coordinates = previouscoords;
-                previouscoords = extracoords;
+
                 if(!foundtwice){
+                    extracoords = coordinates;
+                    coordinates = previouscoords;
+                    previouscoords = extracoords;
                     turnRight();
                     turnRight();
                     moveForward();
+                    qDebug()<<"turned around and moved forward";
                     direction = direction-2;
                     if(direction<0){
                         direction = direction+4;
@@ -257,6 +271,7 @@ When you are at a junction, use the first applicable rule below to pick an entra
                 else{
                     //check #3: pick entrance with the fewest marks
                     min=3;
+                    notmin=false;
                     for(list coords: myNeighbors){
                         found = ::find(visited.begin(), visited.end(), coords) != visited.end();
                         foundtwice = ::find(visitedtwice.begin(), visitedtwice.end(), coords) != visitedtwice.end();
@@ -267,112 +282,140 @@ When you are at a junction, use the first applicable rule below to pick an entra
                             direction=tomove.back();
                             if(tomove.front()==0){
                                 moveForward();
+                                qDebug()<<"moved forward";
                             }
                             else if(tomove.front()==1){
                                 turnRight();
                                 moveForward();
+                                qDebug()<<"turned right and moved forward";
                             }
                             else if(tomove.front()==2){
                                 turnRight();
                                 turnRight();
                                 moveForward();
+                                qDebug()<<"turned around and moved forward";
                             }
                             else{
                                 turnLeft();
                                 moveForward();
+                                qDebug()<<"turned left and moved forward";
                             }
+                            notmin=true;
                             break;
                         }
-                        if(found){
+                        if(found && !foundtwice){
                             min=1;
                             extracoords = coords;
                             //wait until end to decide to use this
                         }
 
                     }
-                    if(min==1){
+                    if(min==1 && !notmin){
                         previouscoords = coordinates;
                         coordinates = extracoords;
                         tomove = todo(direction,previouscoords, coordinates);
                         direction=tomove.back();
                         if(tomove.front()==0){
                             moveForward();
+                            qDebug()<<"moved forward";
                         }
                         else if(tomove.front()==1){
                             turnRight();
                             moveForward();
+                            qDebug()<<"turned right and moved forward";
                         }
                         else if(tomove.front()==2){
                             turnRight();
                             turnRight();
                             moveForward();
+                            qDebug()<<"turned around and moved forward";
                         }
                         else{
                             turnLeft();
                             moveForward();
+                            qDebug()<<"turned left and moved forward";
                         }
                     }
 
                 }
             }
-            recentJunction = coordinates;
-
+            moves.push_back(coordinates);
         }
+
 
         else{
             //first three conditions are if neighbors size is 1, otherwise it is 0 and we go to else condition and turn around(dead end)
             previouscoords=coordinates;
             atJunction=false;
 
-            if(myNeighbors.size()>0){
-                if(!isWallForward()){
 
-                    moveForward();
-                    coordinates = myNeighbors.front();
+            if(!isWallForward()){
 
-                }
-                else if(!isWallRight()){
-                    turnRight();
-                    moveForward();
-                    coordinates = myNeighbors.front();
-                    direction++;
-                }
-                else if(!isWallLeft()){
-                    turnLeft();
-                    moveForward();
-                    coordinates = myNeighbors.front();
-                    direction--;
-                    if(direction<0){
-                        direction=3;
-                    }
-
-                }
+                moveForward();
+                qDebug()<<"moved forward";
+                coordinates = myNeighbors.front();
                 moves.push_back(coordinates);
+
             }
+            else if(!isWallRight()){
+                turnRight();
+                moveForward();
+                qDebug()<<"turned right and moved forward";
+                coordinates = myNeighbors.front();
+                moves.push_back(coordinates);
+                direction++;
+
+            }
+            else if(!isWallLeft()){
+                turnLeft();
+                moveForward();
+                qDebug()<<"turned left and moved forward";
+                coordinates = myNeighbors.front();
+                moves.push_back(coordinates);
+                direction--;
+                if(direction<0){
+                    direction=3;
+                }
+
+            }
+
+
             else{
                 while(moves.size()>0){
                     previouscoords = coordinates;
                     coordinates = moves.back();
+                    tomove = todo(direction, previouscoords, coordinates);
+                    if(tomove.front()!=4){
 
-                    tomove = (direction, previouscoords, coordinates);
-                    direction = tomove.back();
-                    if(tomove.front()==0){
-                        moveForward();
+                        direction = tomove.back();
+                        if(tomove.front()==0){
+                            moveForward();
+                            qDebug()<<"moved forward";
+                        }
+                        else if(tomove.front()==1){
+                            turnRight();
+                            moveForward();
+                            qDebug()<<"turned right and moved forward";
+                        }
+                        else if(tomove.front()==2){
+                            turnRight();
+                            turnRight();
+                            moveForward();
+                            qDebug()<<"turned around and moved forward";
+                        }
+                        else{
+                            turnLeft();
+                            moveForward();
+                            qDebug()<<"turned left and moved forward";
+                        }
                     }
-                    else if(tomove.front()==1){
-                        turnRight();
-                        moveForward();
-                    }
-                    else if(tomove.front()==2){
-                        turnRight();
-                        turnRight();
-                        moveForward();
-                    }
-                    else{
-                        turnLeft();
-                        moveForward();
-                    }
+
                     moves.pop_back();
+                    found = ::find(visited.begin(), visited.end(), coordinates) != visited.end();
+                    if(found){
+                        visited.remove(coordinates);
+                        visitedtwice.push_back(coordinates);
+                    }
 
 
                 }
@@ -386,11 +429,39 @@ When you are at a junction, use the first applicable rule below to pick an entra
         }
         else{
             moveForward();
+
             if(isWallRight() && !isWallLeft() && isWallForward()){
                 turnLeft();
                 moveForward();
+
                 if(!isWallLeft()){
-                    atFinish=true;
+                    turnRight();
+                    moveForward();
+                    if(!isWallRight() && isWallForward()){
+                        atFinish=true;
+                    }
+                    else{
+                        turnRight();
+                        turnRight();
+                        moveForward();
+                        turnLeft();
+                        moveForward();
+                        turnLeft();
+                        moveForward();
+                        turnRight();
+                        turnRight();
+                    }
+
+                }
+                else{
+                    turnRight();
+                    turnRight();
+                    moveForward();
+                    turnRight();
+                    moveForward();
+                    turnRight();
+                    turnRight();
+
                 }
 
             }
@@ -399,6 +470,16 @@ When you are at a junction, use the first applicable rule below to pick an entra
                 moveForward();
                 if(!isWallRight()){
                     atFinish=true;
+
+                }
+                else{
+                    turnRight();
+                    turnRight();
+                    moveForward();
+                    turnLeft();
+                    moveForward();
+                    turnRight();
+                    turnRight();
                 }
             }
             else{
@@ -411,8 +492,13 @@ When you are at a junction, use the first applicable rule below to pick an entra
             }
         }
         count++;
+        if(direction>3){
+            direction = direction%4;
+        }
         /*atFinish part*/
-
+        qDebug()<<"test"<<to_string(coordinates.front())+to_string(coordinates.back());
+        printUI((to_string(coordinates.front())+to_string(coordinates.back())).data());
+        printUI(to_string(direction).data());
 
 
 
@@ -421,6 +507,7 @@ When you are at a junction, use the first applicable rule below to pick an entra
 
 
     }
+    foundFinish();
 
 
 
