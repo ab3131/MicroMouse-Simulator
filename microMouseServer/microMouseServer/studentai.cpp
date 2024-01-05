@@ -176,6 +176,8 @@ void microMouseServer::studentAI()
     list<int> tomove = {0,0};
     list<list<int>> moves = {};
     bool notmin = false;
+    bool debugFound = false;
+    list<int> sevenfour = {7,4};
 
 
     while(!atFinish){
@@ -428,6 +430,89 @@ void microMouseServer::studentAI()
             atFinish=false;
         }
         else{
+            if(!isWallLeft() && isWallRight() && !isWallForward()){
+                moveForward();
+                if(isWallRight() && !isWallLeft() && isWallForward()){
+                    turnLeft();
+                    moveForward();
+                    if(isWallForward() && isWallRight() && !isWallLeft()){
+                        turnLeft();
+                        moveForward();
+                        if(!isWallLeft() && isWallRight() && isWallForward()){
+                            atFinish=true;
+                        }
+                        else{
+                            turnRight();
+                            turnRight();
+                            moveForward();
+                            turnLeft();
+                            moveForward();
+                            turnLeft();
+                            moveForward();
+                            turnRight();
+                            turnRight();
+                        }
+                    }
+                    else{
+                        turnRight();
+                        turnRight();
+                        moveForward();
+                        turnRight();
+                        moveForward();
+                        turnRight();
+                        turnRight();
+                    }
+                }
+                else{
+                    turnRight();
+                    turnRight();
+                    moveForward();
+                    turnRight();
+                    turnRight();
+                }
+            }
+            else if(!isWallRight() && isWallLeft() && !isWallForward()){
+                moveForward();
+                if(!isWallRight() && isWallLeft() && isWallForward()){
+                    turnRight();
+                    moveForward();
+                    if(isWallForward() && !isWallRight() && isWallLeft()){
+                        turnRight();
+                        moveForward();
+                        if(isWallLeft() && !isWallRight() && isWallForward()){
+                            atFinish=true;
+                        }
+                        else{
+                            turnRight();
+                            turnRight();
+                            moveForward();
+                            turnRight();
+                            moveForward();
+                            turnRight();
+                            moveForward();
+                            turnRight();
+                            turnRight();
+                        }
+                    }
+                    else{
+                        turnRight();
+                        turnRight();
+                        moveForward();
+                        turnLeft();
+                        moveForward();
+                        turnRight();
+                        turnRight();
+                    }
+                }
+                else{
+                    turnRight();
+                    turnRight();
+                    moveForward();
+                    turnRight();
+                    turnRight();
+                }
+            }
+            /*
             moveForward();
 
             if(isWallRight() && !isWallLeft() && isWallForward()){
@@ -490,6 +575,7 @@ void microMouseServer::studentAI()
                 turnRight();
                 turnRight();
             }
+*/
         }
         count++;
         if(direction>3){
@@ -497,6 +583,18 @@ void microMouseServer::studentAI()
         }
         /*atFinish part*/
         qDebug()<<"test"<<to_string(coordinates.front())+to_string(coordinates.back());
+
+        if(coordinates.front()==7 && coordinates.back()==4){
+            debugFound = ::find(visited.begin(), visited.end(), coordinates) != visited.end();
+            if(debugFound){
+                printUI("found");
+            }
+            debugFound = ::find(visitedtwice.begin(), visitedtwice.end(), coordinates) != visitedtwice.end();
+            if(debugFound){
+                printUI("foundtwice");
+            }
+            printUI("hello");
+        }
         printUI((to_string(coordinates.front())+to_string(coordinates.back())).data());
         printUI(to_string(direction).data());
 
