@@ -4,12 +4,13 @@ using namespace std;
 #include <iostream>
 #include <string>
 #include <qDebug>
-bool amIFinished = false;
+bool amIFinished = false ;
 
 
 
 list<list<int>> neighbors(list<int> coords, int direction, bool iwf, bool iwl, bool iwr){
     list<list<int>> returnList = {};
+    //depending on the different directions, the booleans will act differently(for example, if mouse is facing up and there's a wall forward, that wall will be a wall left if the mouse is facing right)
     if(!iwf){
         if(direction==0){
             returnList.push_back({coords.front(), coords.back()+1});
@@ -160,12 +161,14 @@ void microMouseServer::studentAI()
 
     int count = 0;
     bool atFinish=false;
+    //coordinates stores the current coordinates in Cartesian coordinate form, previouscoords stores previous coordinates, and extracoords stores local coordinate variables
+    //I realized I could use a vector too much time into this project, otherwise I would have combined direction and coordinates into one
     list coordinates = {0,0};
     list previouscoords = {0,0};
     list extracoords = {0,0};
     list<list<int>> myNeighbors;
     int direction=0;
-    //"visited" and "visitedtwice" mark which squares have been visited, with priority going to non-visited squares
+    //"visited" and "visitedtwice" mark which squares have been visited, with priority going to non-visited squares(foundtwice and found store whether some coordinates are in these lists)
     list<list<int>> visited;
     list<list<int>> visitedtwice;
     bool found;
@@ -173,12 +176,12 @@ void microMouseServer::studentAI()
     bool atJunction = false;
     int marked = 0;
     int min=3;
+
     list<int> tomove = {0,0};
     list<list<int>> moves = {};
+    //notmin ensures that the minimum number wasn't actually 0 so I do not enter an if statement that is later on in the code
     bool notmin = false;
     bool debugFound = false;
-    list<int> sevenfour = {7,4};
-
 
     while(!atFinish){
         //atJunction will be true if the previous coordinates were a junction...so we also have to mark current coordinates because they are an exit to the junction
@@ -192,11 +195,13 @@ void microMouseServer::studentAI()
                 visited.push_back(coordinates);
             }
         }
+
         atJunction=false;
         myNeighbors = neighbors(coordinates, direction, isWallForward(), isWallLeft(), isWallRight());
 
         //myNeighbors size will be greater than one only if the point is a junction
         if(myNeighbors.size()>1){
+            //moves.clear() is required since the list "moves" stores every value after the most recent junction
             moves.clear();
             moves.push_back(coordinates);
             atJunction=true;
@@ -227,28 +232,25 @@ void microMouseServer::studentAI()
             if(marked==0){
                 previouscoords= coordinates;
                 coordinates = myNeighbors.front();
+                //tomove helps us convert coordinates and direction into a more readable form(otherwise there would be quite a few if and else statements)
                 tomove = todo(direction, previouscoords, coordinates);
                 direction = tomove.back();
                 if(tomove.front()==0){
                     moveForward();
-                    qDebug()<<"moved forward";
                 }
                 else if(tomove.front()==1){
                     turnRight();
                     moveForward();
-                    qDebug()<<"turned right and moved forward";
 
                 }
                 else if(tomove.front()==2){
                     turnRight();
                     turnRight();
                     moveForward();
-                    qDebug()<<"turned around and moved forward";
                 }
                 else{
                     turnLeft();
                     moveForward();
-                    qDebug()<<"turned left and moved forward";
 
                 }
 
@@ -264,7 +266,6 @@ void microMouseServer::studentAI()
                     turnRight();
                     turnRight();
                     moveForward();
-                    qDebug()<<"turned around and moved forward";
                     direction = direction-2;
                     if(direction<0){
                         direction = direction+4;
@@ -277,6 +278,7 @@ void microMouseServer::studentAI()
                     for(list coords: myNeighbors){
                         found = ::find(visited.begin(), visited.end(), coords) != visited.end();
                         foundtwice = ::find(visitedtwice.begin(), visitedtwice.end(), coords) != visitedtwice.end();
+                        //this if statement signifies an entrance without a mark; the program should break because it has already found something with 0 marks, the minimum
                         if(!found && !foundtwice){
                             previouscoords = coordinates;
                             tomove = todo(direction,coordinates, coords);
@@ -284,23 +286,19 @@ void microMouseServer::studentAI()
                             direction=tomove.back();
                             if(tomove.front()==0){
                                 moveForward();
-                                qDebug()<<"moved forward";
                             }
                             else if(tomove.front()==1){
                                 turnRight();
                                 moveForward();
-                                qDebug()<<"turned right and moved forward";
                             }
                             else if(tomove.front()==2){
                                 turnRight();
                                 turnRight();
                                 moveForward();
-                                qDebug()<<"turned around and moved forward";
                             }
                             else{
                                 turnLeft();
                                 moveForward();
-                                qDebug()<<"turned left and moved forward";
                             }
                             notmin=true;
                             break;
@@ -319,23 +317,19 @@ void microMouseServer::studentAI()
                         direction=tomove.back();
                         if(tomove.front()==0){
                             moveForward();
-                            qDebug()<<"moved forward";
                         }
                         else if(tomove.front()==1){
                             turnRight();
                             moveForward();
-                            qDebug()<<"turned right and moved forward";
                         }
                         else if(tomove.front()==2){
                             turnRight();
                             turnRight();
                             moveForward();
-                            qDebug()<<"turned around and moved forward";
                         }
                         else{
                             turnLeft();
                             moveForward();
-                            qDebug()<<"turned left and moved forward";
                         }
                     }
 
@@ -354,7 +348,6 @@ void microMouseServer::studentAI()
             if(!isWallForward()){
 
                 moveForward();
-                qDebug()<<"moved forward";
                 coordinates = myNeighbors.front();
                 moves.push_back(coordinates);
 
@@ -362,7 +355,6 @@ void microMouseServer::studentAI()
             else if(!isWallRight()){
                 turnRight();
                 moveForward();
-                qDebug()<<"turned right and moved forward";
                 coordinates = myNeighbors.front();
                 moves.push_back(coordinates);
                 direction++;
@@ -371,7 +363,6 @@ void microMouseServer::studentAI()
             else if(!isWallLeft()){
                 turnLeft();
                 moveForward();
-                qDebug()<<"turned left and moved forward";
                 coordinates = myNeighbors.front();
                 moves.push_back(coordinates);
                 direction--;
@@ -383,6 +374,7 @@ void microMouseServer::studentAI()
 
 
             else{
+                //backtrack until last junction
                 while(moves.size()>0){
                     previouscoords = coordinates;
                     coordinates = moves.back();
@@ -392,23 +384,19 @@ void microMouseServer::studentAI()
                         direction = tomove.back();
                         if(tomove.front()==0){
                             moveForward();
-                            qDebug()<<"moved forward";
                         }
                         else if(tomove.front()==1){
                             turnRight();
                             moveForward();
-                            qDebug()<<"turned right and moved forward";
                         }
                         else if(tomove.front()==2){
                             turnRight();
                             turnRight();
                             moveForward();
-                            qDebug()<<"turned around and moved forward";
                         }
                         else{
                             turnLeft();
                             moveForward();
-                            qDebug()<<"turned left and moved forward";
                         }
                     }
 
@@ -430,6 +418,8 @@ void microMouseServer::studentAI()
             atFinish=false;
         }
         else{
+            //keep checking until you have checked all walls, or something does not line up with the trend of a finish box
+            //when you enter, if there is a wall left, there should be consistently a wall left in the two by two square(it'll go all around and check); it should be a similar situation with the right wall
             if(!isWallLeft() && isWallRight() && !isWallForward()){
                 moveForward();
                 if(isWallRight() && !isWallLeft() && isWallForward()){
@@ -512,91 +502,14 @@ void microMouseServer::studentAI()
                     turnRight();
                 }
             }
-            /*
-            moveForward();
-
-            if(isWallRight() && !isWallLeft() && isWallForward()){
-                turnLeft();
-                moveForward();
-
-                if(!isWallLeft()){
-                    turnRight();
-                    moveForward();
-                    if(!isWallRight() && isWallForward()){
-                        atFinish=true;
-                    }
-                    else{
-                        turnRight();
-                        turnRight();
-                        moveForward();
-                        turnLeft();
-                        moveForward();
-                        turnLeft();
-                        moveForward();
-                        turnRight();
-                        turnRight();
-                    }
-
-                }
-                else{
-                    turnRight();
-                    turnRight();
-                    moveForward();
-                    turnRight();
-                    moveForward();
-                    turnRight();
-                    turnRight();
-
-                }
-
-            }
-            else if(!isWallRight() && isWallLeft() && isWallForward()){
-                turnRight();
-                moveForward();
-                if(!isWallRight()){
-                    atFinish=true;
-
-                }
-                else{
-                    turnRight();
-                    turnRight();
-                    moveForward();
-                    turnLeft();
-                    moveForward();
-                    turnRight();
-                    turnRight();
-                }
-            }
-            else{
-                atFinish=false;
-                turnRight();
-                turnRight();
-                moveForward();
-                turnRight();
-                turnRight();
-            }
-*/
         }
         count++;
         if(direction>3){
             direction = direction%4;
         }
         /*atFinish part*/
-        qDebug()<<"test"<<to_string(coordinates.front())+to_string(coordinates.back());
-
-        if(coordinates.front()==7 && coordinates.back()==4){
-            debugFound = ::find(visited.begin(), visited.end(), coordinates) != visited.end();
-            if(debugFound){
-                printUI("found");
-            }
-            debugFound = ::find(visitedtwice.begin(), visitedtwice.end(), coordinates) != visitedtwice.end();
-            if(debugFound){
-                printUI("foundtwice");
-            }
-            printUI("hello");
-        }
-        printUI((to_string(coordinates.front())+to_string(coordinates.back())).data());
-        printUI(to_string(direction).data());
+        qDebug()<<"coordinates: "<<to_string(coordinates.front())+" " + to_string(coordinates.back());
+        printUI((to_string(coordinates.front())+" " +to_string(coordinates.back())).data());
 
 
 
@@ -617,206 +530,7 @@ void microMouseServer::studentAI()
 
 
 
-    //this is code for a testing phase where i tried to code a combination of Tremaux's algorithm and using neighbors
-    /*
-    while(count<4){
-        /*
-         atFinish = false;
-        /*atFinish part
-         if(isWallForward() || (isWallRight() && isWallLeft())){
-             atFinish=false;
-         }
-         else{
-             moveForward();
-             if(isWallRight() && !isWallLeft() && isWallForward()){
-                 turnLeft();
-                 moveForward();
-                 if(!isWallLeft()){
-                     atFinish=true;
-                 }
-             }
-             else if(!isWallRight() && isWallLeft() && isWallForward()){
-                 turnRight();
-                 moveForward();
-                 if(!isWallRight()){
-                     atFinish=true;
-                 }
-             }
-             else{
-                 atFinish=false;
-                 turnRight();
-                 turnRight();
-                 moveForward();
-                 turnRight();
-                 turnRight();
-             }
-         }
-        /*atFinish part*/
 
-        /*
-        if(!atFinish){
-            if(isWallRight()){
-                if(isWallForward()){
-                    if(isWallLeft()){
-                        /*Reached deadend, turn around
-                        turnRight();
-                        turnRight();
-                        moveForward();
-                    }
-                    else{
-                        /*Wall on right and forward but not left, so you can only move left
-                        turnLeft();
-                        moveForward();
-                    }
-                }
-                else{
-                    /*You will keep the right side on the right wall still
-                    moveForward();
-                }
-            }
-            else{
-                /*This means we have lost our wall on the right, so we have to get it back. Going to the right does this.
-                turnRight();
-                moveForward();
-            }
-        }
-
-        iwf = isWallForward();
-        iwl = isWallLeft();
-        iwr = isWallRight();
-        found = ::find(visited.begin(), visited.end(), coordinates) != visited.end();
-        foundtwice = ::find(visitedtwice.begin(), visitedtwice.end(), coordinates) != visitedtwice.end();
-
-        myNeighbors = neighbors(coordinates, direction, iwf, iwl, iwr);
-        //current condition for exit, has to be changed later on
-        if(myNeighbors.size()==0){
-            foundFinish();
-            atFinish=true;
-        }
-        else{
-            while(myNeighbors.size()>1){
-                for(list<int> neigh: myNeighbors){
-                    foundtwice = ::find(visitedtwice.begin(), visitedtwice.end(), neigh) != visitedtwice.end();
-                    if(foundtwice && myNeighbors.size()>1){
-                        myNeighbors.remove(neigh);
-                    }
-                }
-                break;
-            }
-
-            while(myNeighbors.size()>1){
-                for(list<int> neigh: myNeighbors){
-                    found = ::find(visited.begin(), visited.end(), neigh) != visited.end();
-                    if(found && myNeighbors.size()>1){
-                        myNeighbors.remove(neigh);
-                    }
-                }
-                break;
-            }
-
-            if(myNeighbors.front().back()>coordinates.back()){
-                if(direction==0){
-                    moveForward();
-                }
-                else if(direction==1){
-                    turnLeft();
-                    moveForward();
-                }
-                else if(direction==2){
-                    turnRight();
-                    turnRight();
-                    moveForward();
-                }
-                else{
-                    turnRight();
-                    moveForward();
-                }
-                direction=0;
-                coordinates = {myNeighbors.front().front(),myNeighbors.front().back()};
-            }
-            else if(myNeighbors.front().back()<coordinates.back()){
-
-                if(direction==2){
-                    moveForward();
-                }
-                else if(direction==3){
-                    turnLeft();
-                    moveForward();
-                }
-                else if(direction==0){
-                    turnRight();
-                    turnRight();
-                    moveForward();
-                }
-                else{
-                    turnRight();
-                    moveForward();
-                }
-                direction=2;
-                coordinates = {myNeighbors.front().front(),myNeighbors.front().back()};
-            }
-            else{
-                if(myNeighbors.front().front()>coordinates.front()){
-                    if(direction==1){
-                        moveForward();
-                    }
-                    else if(direction==2){
-                        turnLeft();
-                        moveForward();
-                    }
-                    else if(direction==3){
-                        turnRight();
-                        turnRight();
-                        moveForward();
-                    }
-                    else{
-                        turnRight();
-                        moveForward();
-                    }
-                    direction=1;
-                    coordinates = {myNeighbors.front().front(),myNeighbors.front().back()};
-                }
-                else if(myNeighbors.front().front()<coordinates.front()){
-                    if(direction==3){
-                        moveForward();
-                    }
-                    else if(direction==0){
-                        turnLeft();
-                        moveForward();
-                    }
-                    else if(direction==1){
-                        turnRight();
-                        turnRight();
-                        moveForward();
-                    }
-                    else{
-                        turnRight();
-                        moveForward();
-                    }
-                    direction=3;
-                    coordinates = {myNeighbors.front().front(),myNeighbors.front().back()};
-                }
-
-            }
-            found = ::find(visited.begin(), visited.end(), coordinates) != visited.end();
-            if(found){
-                visited.remove(coordinates);
-                visitedtwice.push_back(coordinates);
-            }
-            else{
-                visited.push_back(coordinates);
-            }
-        }
-
-        printUI(to_string(coordinates.front()).data());
-        printUI(to_string(coordinates.back()).data());
-
-
-        printUI(to_string(found).data());
-        count++;
-
-    }
-    */
 }
 
 
@@ -839,44 +553,4 @@ void microMouseServer::studentAI()
  * The following functions are called when you need to output something to the UI or when you have finished the maze
  * void foundFinish();
  * void printUI(const char *mesg);
-*/
-
-
-
-/* Checks if you are in the 2x2 square
-bool microMouseServer::atFinish(iwl, iwr, iwf, mf, tl, tr){
-    /*In the End Square, when you enter, you can always move forward. The other option is to move right or left, but never both.
-    if(iwf){
-        if(!iwr && iwl){
-            mf();
-            /*If there is no wall on the right when you enter, then if you move forward, there should be no wall on the right in a 2x2 square. Amd same with left
-            if(!iwr){
-                return true;
-            }
-            else{
-                /*Revert back to original position
-                turnRight();
-                turnRight();
-                moveForward();
-                turnRight();
-                turnRight();
-            }
-        }
-        if(isWallRight() && !isWallLeft()){
-            moveForward();
-            if(!isWallLeft()){
-                return true;
-            }
-            else{
-                /*Revert back to original position
-                turnRight();
-                turnRight();
-                moveForward();
-                turnRight();
-                turnRight();
-            }
-        }
-    }
-    return false;
-}
 */
